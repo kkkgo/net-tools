@@ -1,18 +1,18 @@
-
 FROM alpine:edge AS builder
-
 RUN apk add --no-cache \
     curl \
     wget \
     bind-tools \
     traceroute \
     iputils \
-    busybox-static
+    busybox-static \
+    ca-certificates
 
-RUN mkdir -p /collect/bin /collect/lib /collect/etc /collect/app /collect/tmp
+RUN mkdir -p /collect/bin /collect/lib /collect/etc/ssl/certs /collect/app /collect/tmp
+
+RUN cp /etc/ssl/certs/ca-certificates.crt /collect/etc/ssl/certs/ca-certificates.crt
 
 RUN cp /bin/busybox.static /collect/bin/busybox
-
 RUN cp /usr/bin/curl       /collect/bin/curl
 RUN cp /usr/bin/wget       /collect/bin/wget
 RUN cp /usr/bin/dig        /collect/bin/dig
@@ -34,12 +34,16 @@ RUN for bin in \
     done; \
     done
 
+RUN for lib in /usr/lib/libssl.so* /usr/lib/libcrypto.so*; do \
+    [ -f "$lib" ] && cp -n "$lib" /collect/lib/ || true; \
+    done
+
 RUN cp /lib/ld-musl-*.so* /collect/lib/ 2>/dev/null || true
 
 RUN printf 'nameserver 223.6.6.6\nnameserver 1.0.0.1\n' > /collect/etc/resolv.conf
-RUN printf 'hosts: dns files\n'                        > /collect/etc/nsswitch.conf
-RUN printf 'root:x:0:0:root:/:/bin/sh\n'              > /collect/etc/passwd
-RUN printf 'root:x:0:\n'                               > /collect/etc/group
+RUN printf 'hosts: dns files\n'                          > /collect/etc/nsswitch.conf
+RUN printf 'root:x:0:0:root:/:/bin/sh\n'                > /collect/etc/passwd
+RUN printf 'root:x:0:\n'                                 > /collect/etc/group
 
 RUN cat > /collect/etc/profile << 'EOF'
 echo ""
@@ -59,11 +63,7 @@ echo ""
 EOF
 
 FROM scratch
-
 COPY --from=builder /collect/ /
-
 RUN ["/bin/busybox", "--install", "-s", "/bin"]
-
 WORKDIR /app
-
 ENTRYPOINT ["/bin/sh", "-l"]
