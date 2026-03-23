@@ -66,4 +66,4 @@ FROM scratch
 COPY --from=builder /collect/ /
 RUN ["/bin/busybox", "--install", "-s", "/bin"]
 WORKDIR /app
-ENTRYPOINT ["/bin/sh", "-l"]
+CMD ["/bin/sh", "-l"]
