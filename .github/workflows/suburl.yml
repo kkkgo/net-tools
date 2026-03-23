@@ -2,7 +2,7 @@ name: Schedule Latest Build Docker
 
 on:
   schedule:
-    - cron: '57 15 * * 4'
+    - cron: '00 15 * * *'
   workflow_dispatch:
 jobs:
   build:
@@ -24,4 +24,4 @@ jobs:
         with:
           push: true
           platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
-          tags: sliamb/tools:latest
+          tags: sliamb/tool:latest
